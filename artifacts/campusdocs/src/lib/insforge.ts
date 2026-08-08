@@ -321,10 +321,32 @@ export async function createClass(values: {
   department?: string;
   section?: string;
   description?: string;
-  professor_id: string;
+  professor_id?: string;
 }) {
+  // Prefer secure RPC so professor_id comes from the JWT, not the client.
+  const rpc = await insforge.database.rpc('create_class', {
+    p_class_name: values.class_name,
+    p_course_code: values.course_code,
+    p_department: values.department || null,
+    p_section: values.section || null,
+    p_description: values.description || null,
+  });
+
+  if (!rpc.error) {
+    return {
+      data: rpc.data ? [rpc.data as ClassRow] : null,
+      error: null,
+    };
+  }
+
+  // Fallback for environments where the RPC is not applied yet.
   return insertRow('classes', {
-    ...values,
+    class_name: values.class_name,
+    course_code: values.course_code,
+    department: values.department || null,
+    section: values.section || null,
+    description: values.description || null,
+    professor_id: values.professor_id,
     join_code: generateJoinCode(values.course_code),
   });
 }
