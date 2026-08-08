@@ -134,7 +134,6 @@ export function ClassDetail() {
     const result = await createDocument({
       title,
       class_id: classId,
-      professor_id: user.id,
       file_url: uploaded.data.url,
       file_key: uploaded.data.key,
       file_name: file.name,
@@ -145,6 +144,12 @@ export function ClassDetail() {
     setUploading(false);
 
     if (result.error) {
+      // Best-effort cleanup of orphaned storage object
+      try {
+        await fileBucket().remove(uploaded.data.key);
+      } catch {
+        // ignore cleanup failures
+      }
       toast({
         title: 'Could not save document',
         description: result.error.message,

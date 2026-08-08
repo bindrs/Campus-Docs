@@ -290,29 +290,68 @@ export async function removeClassMember(classId: string, studentId: string) {
 }
 
 export async function listMyClasses() {
+  const rpc = await insforge.database.rpc('list_my_classes');
+  if (!rpc.error) {
+    return {
+      data: (rpc.data || []) as ClassRow[],
+      error: null,
+    };
+  }
   return queryTable<ClassRow>('classes', (query) =>
     query.order('created_at', { ascending: false }),
   );
 }
 
+export async function getClass(id: string) {
+  const rpc = await insforge.database.rpc('get_my_class', { p_class_id: id });
+  if (!rpc.error) {
+    return {
+      data: (rpc.data as ClassRow) || null,
+      error: null,
+    };
+  }
+  return queryOne<ClassRow>('classes', id);
+}
+
 export async function listClassDocuments(classId: string) {
+  const rpc = await insforge.database.rpc('list_class_documents', {
+    p_class_id: classId,
+  });
+  if (!rpc.error) {
+    return {
+      data: (rpc.data || []) as DocumentRow[],
+      error: null,
+    };
+  }
   return queryTable<DocumentRow>('documents', (query) =>
     query.eq('class_id', classId).order('uploaded_at', { ascending: false }),
   );
 }
 
 export async function listRecentDocuments() {
+  const rpc = await insforge.database.rpc('list_my_documents');
+  if (!rpc.error) {
+    return {
+      data: ((rpc.data || []) as DocumentRow[]).slice(0, 12),
+      error: null,
+    };
+  }
   return queryTable<DocumentRow>('documents', (query) =>
     query.order('uploaded_at', { ascending: false }).limit(12),
   );
 }
 
 export async function getDocument(id: string) {
+  const rpc = await insforge.database.rpc('get_my_document', {
+    p_document_id: id,
+  });
+  if (!rpc.error) {
+    return {
+      data: (rpc.data as DocumentRow) || null,
+      error: null,
+    };
+  }
   return queryOne<DocumentRow>('documents', id);
-}
-
-export async function getClass(id: string) {
-  return queryOne<ClassRow>('classes', id);
 }
 
 export async function createClass(values: {
@@ -323,7 +362,6 @@ export async function createClass(values: {
   description?: string;
   professor_id?: string;
 }) {
-  // Prefer secure RPC so professor_id comes from the JWT, not the client.
   const rpc = await insforge.database.rpc('create_class', {
     p_class_name: values.class_name,
     p_course_code: values.course_code,
@@ -332,41 +370,59 @@ export async function createClass(values: {
     p_description: values.description || null,
   });
 
-  if (!rpc.error) {
-    return {
-      data: rpc.data ? [rpc.data as ClassRow] : null,
-      error: null,
-    };
-  }
-
-  // Fallback for environments where the RPC is not applied yet.
-  return insertRow('classes', {
-    class_name: values.class_name,
-    course_code: values.course_code,
-    department: values.department || null,
-    section: values.section || null,
-    description: values.description || null,
-    professor_id: values.professor_id,
-    join_code: generateJoinCode(values.course_code),
-  });
+  return {
+    data: rpc.data ? [rpc.data as ClassRow] : null,
+    error: rpc.error ? asError(rpc.error) : null,
+  };
 }
 
-export async function createDocument(values: Record<string, unknown>) {
-  return insertRow('documents', values);
+export async function createDocument(values: {
+  class_id: string;
+  title: string;
+  file_url: string;
+  file_key: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  file_type: string;
+  description?: string;
+}) {
+  const rpc = await insforge.database.rpc('create_document', {
+    p_class_id: values.class_id,
+    p_title: values.title,
+    p_file_url: values.file_url,
+    p_file_key: values.file_key,
+    p_file_name: values.file_name,
+    p_file_size: values.file_size,
+    p_mime_type: values.mime_type,
+    p_file_type: values.file_type,
+    p_description: values.description || null,
+  });
+
+  return {
+    data: rpc.data ? [rpc.data as DocumentRow] : null,
+    error: rpc.error ? asError(rpc.error) : null,
+  };
 }
 
-export async function recordDownload(documentId: string, studentId: string) {
-  return insertRow('document_downloads', {
-    document_id: documentId,
-    student_id: studentId,
+export async function recordDownload(documentId: string, _studentId?: string) {
+  const rpc = await insforge.database.rpc('record_document_download', {
+    p_document_id: documentId,
   });
+  return {
+    data: rpc.data,
+    error: rpc.error ? asError(rpc.error) : null,
+  };
 }
 
-export async function recordView(documentId: string, studentId: string) {
-  return insertRow('document_views', {
-    document_id: documentId,
-    student_id: studentId,
+export async function recordView(documentId: string, _studentId?: string) {
+  const rpc = await insforge.database.rpc('record_document_view', {
+    p_document_id: documentId,
   });
+  return {
+    data: rpc.data,
+    error: rpc.error ? asError(rpc.error) : null,
+  };
 }
 
 export async function listBookmarks(studentId: string) {
@@ -392,15 +448,24 @@ export async function findBookmark(documentId: string, studentId: string) {
   }
 }
 
-export async function addBookmark(documentId: string, studentId: string) {
-  return insertRow('bookmarks', {
-    document_id: documentId,
-    student_id: studentId,
+export async function addBookmark(documentId: string, _studentId?: string) {
+  const rpc = await insforge.database.rpc('add_bookmark', {
+    p_document_id: documentId,
   });
+  return {
+    data: rpc.data ? [rpc.data as BookmarkRow] : null,
+    error: rpc.error ? asError(rpc.error) : null,
+  };
 }
 
 export async function removeBookmark(bookmarkId: string) {
-  return deleteRow('bookmarks', bookmarkId);
+  const rpc = await insforge.database.rpc('remove_bookmark', {
+    p_bookmark_id: bookmarkId,
+  });
+  return {
+    data: rpc.data,
+    error: rpc.error ? asError(rpc.error) : null,
+  };
 }
 
 export function fileBucket() {

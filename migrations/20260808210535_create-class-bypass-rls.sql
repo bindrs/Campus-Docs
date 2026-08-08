@@ -1,6 +1,3 @@
--- Cannot alter classes policies (relation owned by platform role).
--- Add SECURITY DEFINER RPC so professors can create classes reliably.
-
 CREATE OR REPLACE FUNCTION public.create_class(
   p_class_name TEXT,
   p_course_code TEXT,
@@ -12,6 +9,7 @@ RETURNS public.classes
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog, public, pg_temp
+SET row_security = off
 AS $$
 DECLARE
   uid UUID;
