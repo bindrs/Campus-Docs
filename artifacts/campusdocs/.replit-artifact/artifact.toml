@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "CampusDocs"
+description = "A serverless academic document hub for colleges and universities, powered by InsForge. Students join classes, browse and bookmark course materials, while professors manage classes, upload documents, and monitor engagement."
+version = "1.0.0"
+id = "artifacts/campusdocs"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22975
+
+[services.development]
+run = "pnpm --filter @workspace/campusdocs run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/campusdocs", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/campusdocs/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22975"
+BASE_PATH = "/"

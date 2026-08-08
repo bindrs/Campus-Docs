@@ -1,0 +1,77 @@
+import type { CampusClass, CampusDocument } from '@/hooks/use-campus';
+
+/** Demo-only fixtures (not used when signed in against InsForge). */
+export const sampleClasses: CampusClass[] = [
+  {
+    id: 'sample-1',
+    class_name: 'Cognitive Science',
+    course_code: 'PSY 204',
+    department: 'Psychology',
+    section: 'A',
+    description: 'How minds make meaning.',
+    join_code: 'MIND-24',
+    professor_id: 'sample-professor',
+  },
+  {
+    id: 'sample-2',
+    class_name: 'History of Modern Design',
+    course_code: 'ART 118',
+    department: 'Design History',
+    section: 'B',
+    description: 'Objects, movements, and the people behind them.',
+    join_code: 'FORM-18',
+    professor_id: 'sample-professor',
+  },
+  {
+    id: 'sample-3',
+    class_name: 'Data Structures',
+    course_code: 'CS 231',
+    department: 'Computer Science',
+    section: 'A',
+    description: 'A practical tour through elegant algorithms.',
+    join_code: 'STACK-31',
+    professor_id: 'sample-professor',
+  },
+];
+
+export const sampleDocs: CampusDocument[] = [
+  {
+    id: 'doc-1',
+    title: 'Week 04 · Attention & memory',
+    file_name: 'attention-memory.pdf',
+    file_type: 'PDF',
+    mime_type: 'application/pdf',
+    file_size: 2400000,
+    uploaded_at: '2025-02-14T10:00:00Z',
+    class_id: 'sample-1',
+    description: 'Lecture notes, annotated diagrams, and the reading map for this week.',
+    file_url: '',
+    file_key: '',
+  },
+  {
+    id: 'doc-2',
+    title: 'Field notes template',
+    file_name: 'field-notes-template.docx',
+    file_type: 'DOCX',
+    mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    file_size: 640000,
+    uploaded_at: '2025-02-12T10:00:00Z',
+    class_id: 'sample-1',
+    description: 'A lightweight template for your next observation session.',
+    file_url: '',
+    file_key: '',
+  },
+  {
+    id: 'doc-3',
+    title: 'Design movements · a visual index',
+    file_name: 'design-movements.pdf',
+    file_type: 'PDF',
+    mime_type: 'application/pdf',
+    file_size: 5100000,
+    uploaded_at: '2025-02-09T10:00:00Z',
+    class_id: 'sample-2',
+    description: 'The visual reference sheet for our studio conversation.',
+    file_url: '',
+    file_key: '',
+  },
+];
