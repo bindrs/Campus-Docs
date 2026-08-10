@@ -1,8 +1,8 @@
 {
   "version": 2,
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @workspace/campusdocs build && pnpm --filter @workspace/api-server build:vercel",
-  "outputDirectory": "artifacts/campusdocs/dist/public",
+  "buildCommand": "pnpm --filter @workspace/campusdocs build && pnpm --filter @workspace/api-server build:vercel && rm -rf public && cp -R artifacts/campusdocs/dist/public public",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/(.*)",
