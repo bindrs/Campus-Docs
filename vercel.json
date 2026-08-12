@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "installCommand": "cd concordia && pnpm install --frozen-lockfile",
-  "buildCommand": "cd concordia && node scripts/vercel-build.mjs",
-  "outputDirectory": "concordia/public",
+  "installCommand": "corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --frozen-lockfile",
+  "buildCommand": "node scripts/vercel-build.mjs",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/(.*)",
