@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "env": {
+    "VITE_INSFORGE_AUTH_REDIRECT_URL": "https://clgdocs.vercel.app/dashboard"
+  },
   "installCommand": "cd ../.. && corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --frozen-lockfile",
   "buildCommand": "node vercel-build.mjs",
   "outputDirectory": "dist/public",

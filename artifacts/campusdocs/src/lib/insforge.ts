@@ -3,6 +3,7 @@ import { createClient } from '@insforge/sdk';
 const baseUrl = import.meta.env.VITE_INSFORGE_URL;
 const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY;
 const configuredAuthRedirectUrl = import.meta.env.VITE_INSFORGE_AUTH_REDIRECT_URL?.trim();
+const productionAuthRedirectUrl = 'https://clgdocs.vercel.app/dashboard';
 
 export const insforge = createClient({
   baseUrl: baseUrl || '',
@@ -21,7 +22,11 @@ export function getAuthRedirectUrl() {
     }
   }
 
-  return new URL('/dashboard', window.location.origin).toString();
+  if (import.meta.env.DEV) {
+    return new URL('/dashboard', window.location.origin).toString();
+  }
+
+  return productionAuthRedirectUrl;
 }
 
 export type UserRole = 'student' | 'professor' | 'admin';
