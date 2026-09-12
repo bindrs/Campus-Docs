@@ -2,11 +2,27 @@ import { createClient } from '@insforge/sdk';
 
 const baseUrl = import.meta.env.VITE_INSFORGE_URL;
 const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY;
+const configuredAuthRedirectUrl = import.meta.env.VITE_INSFORGE_AUTH_REDIRECT_URL?.trim();
 
 export const insforge = createClient({
   baseUrl: baseUrl || '',
   anonKey: anonKey || undefined,
 });
+
+export function getAuthRedirectUrl() {
+  if (configuredAuthRedirectUrl) {
+    try {
+      const redirectUrl = new URL(configuredAuthRedirectUrl);
+      if (redirectUrl.protocol === 'http:' || redirectUrl.protocol === 'https:') {
+        return redirectUrl.toString();
+      }
+    } catch {
+      // Fall through to the current browser origin for local development.
+    }
+  }
+
+  return new URL('/dashboard', window.location.origin).toString();
+}
 
 export type UserRole = 'student' | 'professor' | 'admin';
 

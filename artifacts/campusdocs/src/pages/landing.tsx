@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
-import { insforge } from '@/lib/insforge';
+import { getAuthRedirectUrl, insforge } from '@/lib/insforge';
 import { setPendingRole } from '@/lib/role';
 
 type RoleChoice = 'student' | 'professor';
@@ -29,7 +29,7 @@ export function Landing() {
     setPendingRole(selected);
     setSigningIn(true);
     const { error } = await insforge.auth.signInWithOAuth('google', {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: getAuthRedirectUrl(),
       additionalParams: { prompt: 'select_account' },
     });
     setSigningIn(false);
