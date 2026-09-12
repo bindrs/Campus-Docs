@@ -81,6 +81,43 @@ export type BookmarkRow = {
   created_at?: string;
 };
 
+export type AnnouncementRow = {
+  id: string;
+  class_id: string;
+  author_id: string;
+  title: string;
+  message: string;
+  attachment_url?: string | null;
+  attachment_key?: string | null;
+  expires_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type AssignmentRow = {
+  id: string;
+  class_id: string;
+  author_id: string;
+  title: string;
+  instructions: string;
+  attachment_url?: string | null;
+  attachment_key?: string | null;
+  deadline?: string | null;
+  total_marks?: number | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type NotificationRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string;
+  type: string;
+  is_read: boolean;
+  created_at?: string;
+};
+
 type DbResult<T> = { data: T | null; error: Error | null };
 
 function asError(error: unknown): Error {
@@ -486,6 +523,73 @@ export async function removeBookmark(bookmarkId: string) {
   return {
     data: rpc.data,
     error: rpc.error ? asError(rpc.error) : null,
+  };
+}
+
+export async function listAnnouncements(classId: string) {
+  return queryTable<AnnouncementRow>('announcements', (query) =>
+    query.eq('class_id', classId).order('created_at', { ascending: false }),
+  );
+}
+
+export async function createAnnouncement(values: {
+  class_id: string;
+  author_id: string;
+  title: string;
+  message: string;
+}) {
+  const result = await insforge.database
+    .from('announcements')
+    .insert([values])
+    .select()
+    .maybeSingle();
+  return {
+    data: (result.data as AnnouncementRow) || null,
+    error: result.error ? asError(result.error) : null,
+  };
+}
+
+export async function listAssignments(classId: string) {
+  return queryTable<AssignmentRow>('assignments', (query) =>
+    query.eq('class_id', classId).order('deadline', { ascending: true }),
+  );
+}
+
+export async function createAssignment(values: {
+  class_id: string;
+  author_id: string;
+  title: string;
+  instructions: string;
+  deadline?: string | null;
+  total_marks?: number | null;
+}) {
+  const result = await insforge.database
+    .from('assignments')
+    .insert([values])
+    .select()
+    .maybeSingle();
+  return {
+    data: (result.data as AssignmentRow) || null,
+    error: result.error ? asError(result.error) : null,
+  };
+}
+
+export async function listNotifications(userId: string) {
+  return queryTable<NotificationRow>('notifications', (query) =>
+    query.eq('user_id', userId).order('created_at', { ascending: false }),
+  );
+}
+
+export async function markNotificationRead(notificationId: string) {
+  const result = await insforge.database
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('id', notificationId)
+    .select()
+    .maybeSingle();
+  return {
+    data: (result.data as NotificationRow) || null,
+    error: result.error ? asError(result.error) : null,
   };
 }
 

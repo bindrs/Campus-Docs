@@ -1,6 +1,5 @@
 import { type ReactNode, useState } from 'react';
 import {
-  Bell,
   ChevronRight,
   CircleHelp,
   GraduationCap,
@@ -15,9 +14,15 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { Logo } from '@/components/logo';
-import { useCampusSession } from '@/hooks/use-campus';
+import { NotificationsPopover } from '@/components/notifications-popover';
+import { useCampusData, useCampusSession, useRealtimeRefresh } from '@/hooks/use-campus';
 import { initials } from '@/lib/format';
-import { insforge } from '@/lib/insforge';
+import {
+  type NotificationRow,
+  insforge,
+  listNotifications,
+  markNotificationRead,
+} from '@/lib/insforge';
 import { isProfessor } from '@/lib/role';
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -25,6 +30,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, profile, displayName } = useCampusSession();
   const professor = isProfessor(profile?.role);
+  const notificationsQuery = useCampusData<NotificationRow>(
+    () => listNotifications(user?.id || ''),
+    [user?.id],
+    !!user?.id,
+  );
+
+  useRealtimeRefresh(notificationsQuery.refresh, 'notifications');
+
+  const readNotification = async (notification: NotificationRow) => {
+    if (notification.is_read) return;
+    const result = await markNotificationRead(notification.id);
+    if (!result.error) void notificationsQuery.refresh();
+  };
 
   const nav = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -174,13 +192,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               Search
               <kbd className="ml-3 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">⌘ K</kbd>
             </button>
-            <button
-              data-testid="button-notifications"
-              className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <Bell className="h-[18px] w-[18px]" />
-              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-accent" />
-            </button>
+            <NotificationsPopover
+              notifications={notificationsQuery.data}
+              onRead={(notification) => void readNotification(notification)}
+            />
             <Link
               href="/profile"
               data-testid="link-header-profile"

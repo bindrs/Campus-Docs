@@ -14,6 +14,8 @@ import { DocumentList } from '@/components/document-list';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { LoadingPage } from '@/components/loading-page';
+import { ClassAnnouncements } from '@/components/class-announcements';
+import { ClassAssignments } from '@/components/class-assignments';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -25,11 +27,17 @@ import {
 } from '@/hooks/use-campus';
 import { useToast } from '@/hooks/use-toast';
 import {
+  type AnnouncementRow,
+  type AssignmentRow,
   type ClassRow,
   type DocumentRow,
+  createAnnouncement,
+  createAssignment,
   createDocument,
   fileBucket,
   getClass,
+  listAnnouncements,
+  listAssignments,
   listClassDocuments,
 } from '@/lib/insforge';
 import { isProfessor } from '@/lib/role';
@@ -83,6 +91,7 @@ export function ClassDetail() {
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
+  const [savingUpdate, setSavingUpdate] = useState(false);
   const { profile, user } = useCampusSession();
   const professor = isProfessor(profile?.role);
   const { toast } = useToast();
@@ -93,7 +102,21 @@ export function ClassDetail() {
     !!classId,
   );
 
+  const announcementsQuery = useCampusData<AnnouncementRow>(
+    () => listAnnouncements(classId),
+    [classId],
+    !!classId,
+  );
+
+  const assignmentsQuery = useCampusData<AssignmentRow>(
+    () => listAssignments(classId),
+    [classId],
+    !!classId,
+  );
+
   useRealtimeRefresh(docsQuery.refresh, 'documents');
+  useRealtimeRefresh(announcementsQuery.refresh, 'announcements');
+  useRealtimeRefresh(assignmentsQuery.refresh, 'assignments');
 
   useEffect(() => {
     if (!classId) return;
@@ -167,7 +190,72 @@ export function ClassDetail() {
     }
   };
 
-  if (classLoading || docsQuery.isLoading) return <LoadingPage />;
+  const publishAnnouncement = async (values: { title: string; message: string }) => {
+    if (!user?.id) return false;
+    setSavingUpdate(true);
+    const result = await createAnnouncement({
+      class_id: classId,
+      author_id: user.id,
+      title: values.title,
+      message: values.message,
+    });
+    setSavingUpdate(false);
+    if (result.error) {
+      toast({
+        title: 'Could not publish announcement',
+        description: result.error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+    toast({
+      title: 'Announcement published',
+      description: 'Enrolled students will receive a notification.',
+    });
+    void announcementsQuery.refresh();
+    return true;
+  };
+
+  const publishAssignment = async (values: {
+    title: string;
+    instructions: string;
+    deadline: string;
+    totalMarks: string;
+  }) => {
+    if (!user?.id) return false;
+    setSavingUpdate(true);
+    const result = await createAssignment({
+      class_id: classId,
+      author_id: user.id,
+      title: values.title,
+      instructions: values.instructions,
+      deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
+      total_marks: values.totalMarks ? Number(values.totalMarks) : null,
+    });
+    setSavingUpdate(false);
+    if (result.error) {
+      toast({
+        title: 'Could not publish assignment',
+        description: result.error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+    toast({
+      title: 'Assignment published',
+      description: 'Enrolled students will receive a notification.',
+    });
+    void assignmentsQuery.refresh();
+    return true;
+  };
+
+  if (
+    classLoading ||
+    docsQuery.isLoading ||
+    announcementsQuery.isLoading ||
+    assignmentsQuery.isLoading
+  )
+    return <LoadingPage />;
   if (classError || !item) {
     return (
       <ErrorState message="This class isn’t available. Join it first, or check the link." />
@@ -251,7 +339,29 @@ export function ClassDetail() {
         ))}
       </div>
 
-      {tab === 'Documents' ? (
+      {tab === 'Announcements' ? (
+        announcementsQuery.error ? (
+          <ErrorState message={`Announcements could not load: ${announcementsQuery.error.message}`} />
+        ) : (
+          <ClassAnnouncements
+            announcements={announcementsQuery.data}
+            canManage={canUpload}
+            onCreate={publishAnnouncement}
+            saving={savingUpdate}
+          />
+        )
+      ) : tab === 'Assignments' ? (
+        assignmentsQuery.error ? (
+          <ErrorState message={`Assignments could not load: ${assignmentsQuery.error.message}`} />
+        ) : (
+          <ClassAssignments
+            assignments={assignmentsQuery.data}
+            canManage={canUpload}
+            onCreate={publishAssignment}
+            saving={savingUpdate}
+          />
+        )
+      ) : tab === 'Documents' ? (
         docsQuery.data.length ? (
           <DocumentList docs={docsQuery.data} />
         ) : (
